@@ -22,7 +22,7 @@ export const webhookController = async (
 
   // if (typeof matchedTransactions ===)
 
-  io.emit("streams_timestamp", new Date().toDateString());
+  io.emit("streams_timestamp", new Date().toISOString());
 
   io.on("connection", (socket) => {
     console.log(socket);
