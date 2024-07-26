@@ -1,10 +1,9 @@
 import cors from "cors";
 import { config } from "dotenv";
-import express, { NextFunction, Request, Response } from "express";
-import { createServer } from "http";
+import { NextFunction, Request, Response } from "express";
 import { join } from "path";
 // .
-import App from "./app";
+import { app, httpServer } from "./app";
 // initialize env
 config({ path: join(__dirname, `../.env.${process.env.NODE_ENV}`) });
 
@@ -12,19 +11,8 @@ const { PORT } = process.env;
 
 // middlewares
 import { checkForInvalidRoutes } from "./middlewares";
-// namespaces
-import { instantiateNamespacesIO } from "./namespace";
 // routes
 import routes, { baseURL } from "./routes";
-
-// app
-const app = new App().app;
-
-// server
-const httpServer = createServer(app);
-
-// let's bind socket.io to our http server
-instantiateNamespacesIO(httpServer);
 
 app.get("/alive", (req, res) => {
   return res.status(200).json({
@@ -96,6 +84,6 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   return res.status(statusCode).json(response);
 });
 
-const server = httpServer.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server is listening on PORT ${PORT}`);
 });
