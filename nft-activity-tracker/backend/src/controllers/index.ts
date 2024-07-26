@@ -14,19 +14,43 @@ export const webhookController = async (
   console.log(JSON.stringify(matchedTransactions));
   console.log("------- json body ---------");
 
-  const { send_test_success } = emitEvents;
+  const { connection_success, send_test_success, updated_watch_address } =
+    emitEvents;
 
   const { send_test } = onEvents;
 
-  const addressForClientToListen = [];
+  const addressForClientToListen: any[] = [];
 
-  // if (typeof matchedTransactions ===)
+  if (!Array.isArray(matchedTransactions)) {
+    return res.status(200).json({
+      message:
+        "`req.body` is not an array. Check QuickNode notification emitter.",
+      error: "",
+      success: true,
+    });
+  }
+
+  matchedTransactions.forEach((tx) => {
+    const { from, to } = tx;
+
+    if (from !== to) {
+      addressForClientToListen.push(to.toLowerCase());
+    }
+
+    addressForClientToListen.push(from.toLowerCase());
+  });
+
+  if (addressForClientToListen.length > 0) {
+    io.emit(updated_watch_address, {
+      data: addressForClientToListen,
+      error: "",
+      success: true,
+    });
+  }
 
   io.emit("streams_timestamp", new Date().toISOString());
 
   io.on("connection", (socket) => {
-    console.log(socket);
-
     socket.on(send_test, (payload) => {
       socket.emit(send_test_success, {
         message: "connected to socket",
@@ -34,7 +58,7 @@ export const webhookController = async (
       });
     });
 
-    io.emit("got_some_data", { message: "hey there" });
+    io.emit(connection_success, { message: "connected" });
   });
 
   return res.status(200).json({ data: null, error: "", success: true });
