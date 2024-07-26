@@ -11,6 +11,6 @@ export default class App {
 
   private config(): void {
     this.app.use(bodyParse.urlencoded({ extended: false }));
-    this.app.use(express.json());
+    this.app.use(express.json({ limit: "1mb" }));
   }
 }
