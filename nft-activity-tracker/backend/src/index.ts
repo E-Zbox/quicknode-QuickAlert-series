@@ -79,6 +79,13 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
         error: error.message,
       };
       break;
+    case "RequestURLError":
+      statusCode = 500;
+      response = {
+        ...response,
+        error: error.message,
+      };
+      break;
     default:
       console.log("----");
       console.log(error.name);
