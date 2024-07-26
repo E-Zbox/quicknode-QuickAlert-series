@@ -9,6 +9,9 @@ import App from "./app";
 config({ path: join(__dirname, `../.env.${process.env.NODE_ENV}`) });
 
 const { PORT } = process.env;
+
+// middlewares
+import { checkForInvalidRoutes } from "./middlewares";
 // namespaces
 import { instantiateNamespacesIO } from "./namespace";
 // routes
@@ -37,6 +40,8 @@ app.use(
 );
 
 app.use(`${baseURL}`, routes);
+
+app.use("/*", checkForInvalidRoutes);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   let statusCode = 500;
