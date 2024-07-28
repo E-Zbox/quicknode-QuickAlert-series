@@ -1,9 +1,8 @@
-import cors from "cors";
 import { config } from "dotenv";
 import { NextFunction, Request, Response } from "express";
 import { join } from "path";
 // .
-import { app, httpServer } from "./app";
+import { app, httpServer, io } from "./app";
 // initialize env
 config({ path: join(__dirname, `../.env.${process.env.NODE_ENV}`) });
 
@@ -20,12 +19,6 @@ app.get("/alive", (req, res) => {
     success: true,
   });
 });
-
-app.use(
-  cors({
-    origin: "*",
-  })
-);
 
 app.use(`${baseURL}`, routes);
 

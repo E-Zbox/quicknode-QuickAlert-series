@@ -63,7 +63,7 @@ export const webhookController = async (
       });
     });
 
-    io.emit(connection_success, { message: "connected" });
+    socket.emit(connection_success, { message: "connected" });
   });
 
   return res.status(200).json({ data: null, error: "", success: true });
