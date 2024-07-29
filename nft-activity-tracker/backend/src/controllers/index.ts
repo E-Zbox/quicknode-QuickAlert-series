@@ -10,9 +10,6 @@ export const webhookController = async (
   next: NextFunction
 ) => {
   const matchedTransactions = req.body;
-  console.log("json body");
-  console.log(JSON.stringify(matchedTransactions));
-  console.log("------- json body ---------");
 
   const {
     connection_success,
