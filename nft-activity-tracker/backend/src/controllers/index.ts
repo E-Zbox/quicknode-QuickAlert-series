@@ -14,8 +14,12 @@ export const webhookController = async (
   console.log(JSON.stringify(matchedTransactions));
   console.log("------- json body ---------");
 
-  const { connection_success, send_test_success, updated_watch_address } =
-    emitEvents;
+  const {
+    connection_success,
+    send_test_success,
+    transaction_success,
+    updated_watch_address,
+  } = emitEvents;
 
   const { send_test } = onEvents;
 
@@ -55,16 +59,7 @@ export const webhookController = async (
 
   io.emit("streams_timestamp", new Date().toISOString());
 
-  io.on("connection", (socket) => {
-    socket.on(send_test, (payload) => {
-      socket.emit(send_test_success, {
-        message: "connected to socket",
-        success: true,
-      });
-    });
-
-    socket.emit(connection_success, { message: "connected" });
-  });
+  io.emit(transaction_success, matchedTransactions);
 
   return res.status(200).json({ data: null, error: "", success: true });
 };
