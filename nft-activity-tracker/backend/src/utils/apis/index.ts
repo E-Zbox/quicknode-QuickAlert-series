@@ -83,14 +83,26 @@ export const updateNotification = async (
 
     const headers = new Headers();
     headers.append("Accept", "application/json");
+    headers.append("Content-Type", "application/json");
     headers.append("X-API-Key", QUICKNODE_API_KEY);
 
-    fetch(`${QUICKNODE_NOTIFICATION_ENDPOINT}/${notificationId}`, {
-      method: "PATCH",
-      headers,
-      redirect: "follow",
-      body: JSON.stringify(updatePayload),
-    });
+    const result = await fetch(
+      `${QUICKNODE_NOTIFICATION_ENDPOINT}/${notificationId}`,
+      {
+        method: "PATCH",
+        headers,
+        redirect: "follow",
+        body: JSON.stringify(updatePayload),
+      }
+    );
+
+    const data = await result.json();
+
+    response = {
+      data,
+      error: "",
+      success: true,
+    };
   } catch (error) {
     response = {
       ...response,
