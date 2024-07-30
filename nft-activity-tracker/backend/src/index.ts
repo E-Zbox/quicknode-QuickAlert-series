@@ -11,7 +11,8 @@ const { PORT } = process.env;
 // middlewares
 import { checkForInvalidRoutes } from "./middlewares";
 // routes
-import routes, { baseURL } from "./routes";
+import notificationRoutes from "./routes/notificationRoutes";
+import webhookRoutes from "./routes/webhookRoutes";
 
 app.get("/alive", (req, res) => {
   return res.status(200).json({
@@ -20,7 +21,10 @@ app.get("/alive", (req, res) => {
   });
 });
 
-app.use(`${baseURL}`, routes);
+const baseURL = "/api/v1";
+
+app.use(`${baseURL}/notification`, notificationRoutes);
+app.use(`${baseURL}/webhook`, webhookRoutes);
 
 app.use("/*", checkForInvalidRoutes);
 
@@ -53,6 +57,13 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   }
 
   switch (error.name) {
+    case "MissingEnvError":
+      statusCode = 500;
+      response = {
+        ...response,
+        error: "Something went wrong. Contact support!",
+      };
+      break;
     case "ReferenceError":
       statusCode = 500;
       response = {
@@ -61,7 +72,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
       };
       break;
     case "RequestURLError":
-      statusCode = 500;
+      statusCode = 404;
       response = {
         ...response,
         error: error.message,
