@@ -40,7 +40,7 @@ export const updateNotificationExpressionController = async (
 
     const regex = /^0x[a-fA-F0-9]{40}$/;
 
-    if (regex.test(_addressToListen)) {
+    if (!regex.test(_addressToListen)) {
       throw new RequestBodyError(`Invalid "${_addressToListen}" address`);
     }
 
