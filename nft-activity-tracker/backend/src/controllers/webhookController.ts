@@ -12,7 +12,7 @@ export const webhookController = async (
   try {
     const matchedTransactions = req.body;
 
-    const { transaction_success, updated_watch_address } = emitEvents;
+    const { transaction_success, transaction_address } = emitEvents;
 
     const { send_test } = onEvents;
 
@@ -47,7 +47,7 @@ export const webhookController = async (
     };
 
     if (addressForClientToListen.length > 0) {
-      io.emit(updated_watch_address, response);
+      io.emit(transaction_address, response);
     }
 
     io.emit("streams_timestamp", new Date().toISOString());

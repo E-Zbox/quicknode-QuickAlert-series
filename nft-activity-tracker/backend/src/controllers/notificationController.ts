@@ -1,4 +1,8 @@
 import { NextFunction, Request, Response } from "express";
+// app
+import { io } from "@/app";
+// event listeners
+import { emitEvents } from "@/listeners";
 // utils
 import { getNotification, updateNotification } from "@/utils/apis";
 import { checkForObjectKeys } from "@/utils/config";
@@ -70,6 +74,16 @@ export const updateNotificationExpressionController = async (
     if (!success) {
       throw error;
     }
+
+    const { updated_watch_address } = emitEvents;
+
+    let splittedExpression = data.expression.split(" == ");
+
+    const watchAddress = splittedExpression[
+      splittedExpression.length - 1
+    ].replaceAll("'", "");
+
+    io.emit(updated_watch_address, watchAddress);
 
     return res.status(201).json({ data, error, success });
   } catch (error) {
