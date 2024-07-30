@@ -4,9 +4,9 @@ import React from "react";
 import Layout from "./components/Layout";
 
 export const metadata: Metadata = {
-  title: "TokenScope",
+  title: "ERC-X QuickAlert",
   description:
-    "ERC-20 Token In a Nutshell. Unmask key metrics, top holders, and insightful data - all in one place.",
+    "Get transaction alerts of any Ethereum wallet address, smart contract, ERC-20, 721, e.t.c. Get notified at the nick of time!",
 };
 
 export default function RootLayout({
