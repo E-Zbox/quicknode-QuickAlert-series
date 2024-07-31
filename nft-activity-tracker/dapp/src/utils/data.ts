@@ -2,13 +2,14 @@
 import appBg from "../../public/app-bg.jpg";
 import appLogo from "../../public/app-logo-no-bg.png";
 import ethereumIcon from "../../public/icons8-ethereum-144.png";
+import loaderGif from "../../public/loader.gif";
 import searchIcon from "../../public/icons8-search-120.png";
 
 export const devices = {};
 
 export const screens = {
   default: {
-    assets: { appLogo, ethereumIcon, searchIcon },
+    assets: { appLogo, ethereumIcon, loaderGif, searchIcon },
   },
 };
 

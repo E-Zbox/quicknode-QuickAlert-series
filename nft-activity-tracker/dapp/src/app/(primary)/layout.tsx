@@ -1,90 +1,166 @@
 "use client";
-import React, { useEffect } from "react";
-import { Socket, io } from "socket.io-client";
+import React, { MutableRefObject, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 // components
+import Menu from "../components/Menu";
 import Navbar from "../components/Navbar";
 // socket
-import { isAlive, onEvents } from "@/socket";
+import {
+  getNotificationExpression,
+  isAlive,
+  onEvents,
+  updateNotificationExpression,
+} from "@/api";
 // store
 import { useAppStore, useTransactionStore } from "@/store";
 // styles
 import { AppContainer, MainApp } from "../styles/App.styles";
-import Menu from "../components/Menu";
+// utils
+import { IMenuItem } from "@/utils/menu";
 
-const NEXT_PUBLIC_SOCKET_ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_ENDPOINT;
+const NEXT_PUBLIC_WEBHOOK_ENDPOINT = process.env.NEXT_PUBLIC_WEBHOOK_ENDPOINT;
 
 export default function PrimaryLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { menuItems, setMenuItems, socketConnected, setSocketConnected } =
-    useAppStore(
-      ({ menuItems, setMenuItems, socketConnected, setSocketConnected }) => ({
-        menuItems,
-        setMenuItems,
-        socketConnected,
-        setSocketConnected,
+  const {
+    menuItems,
+    setMenuItems,
+    socket,
+    setSocket,
+    socketConnected,
+    setSocketConnected,
+    toggleMenuItemSelectedField,
+  } = useAppStore(
+    ({
+      menuItems,
+      setMenuItems,
+      socket,
+      setSocket,
+      socketConnected,
+      setSocketConnected,
+      toggleMenuItemSelectedField,
+    }) => ({
+      menuItems,
+      setMenuItems,
+      socket,
+      setSocket,
+      socketConnected,
+      setSocketConnected,
+      toggleMenuItemSelectedField,
+    })
+  );
+
+  const { searchQuery, setSearchQuery, setLoading, setTxState, updateTxState } =
+    useTransactionStore(
+      ({
+        searchQuery,
+        setSearchQuery,
+        setLoading,
+        setTxState,
+        updateTxState,
+      }) => ({
+        searchQuery,
+        setSearchQuery,
+        setLoading,
+        setTxState,
+        updateTxState,
       })
     );
 
-  const { updateTxState } = useTransactionStore(({ updateTxState }) => ({
-    updateTxState,
-  }));
+  const menuItemsRef = useRef() as MutableRefObject<IMenuItem[]>;
+
+  const {
+    connection_success,
+    streams_timestamp,
+    transaction_address,
+    transaction_success,
+    updated_watch_address,
+  } = onEvents;
+
+  const transactionAddressListener = (payload: any) => {
+    const { data } = payload;
+    const selectedMenuItems = menuItemsRef.current.find(
+      (item) => item.selected
+    )!;
+
+    if (selectedMenuItems) {
+      const updatedMenuItems = data.map((title: string) => ({
+        selected: title.toLowerCase() === selectedMenuItems.title.toLowerCase(),
+        title,
+      }));
+
+      setMenuItems(updatedMenuItems);
+    }
+  };
+
+  const transactionSuccessListener = (payload: any) => {
+    updateTxState(payload);
+  };
+
+  useEffect(() => {
+    // initial load
+
+    getNotificationExpression().then((res) => {
+      const { data, error, success } = res;
+
+      if (!success) {
+        console.log(error);
+        return;
+      }
+
+      let splittedExpression = data.split(" == ");
+
+      const title = splittedExpression[
+        splittedExpression.length - 1
+      ].replaceAll("'", "");
+
+      setMenuItems([
+        {
+          selected: true,
+          title,
+        },
+      ]);
+    });
+
+    isAlive().then((res) => console.log(res));
+  }, []);
 
   useEffect(() => {
     // establish socket connection
-    if (!NEXT_PUBLIC_SOCKET_ENDPOINT) {
-      throw new Error(`Missing 'NEXT_PUBLIC_SOCKET_ENDPOINT' in environment`);
+    if (!NEXT_PUBLIC_WEBHOOK_ENDPOINT) {
+      throw new Error(`Missing 'NEXT_PUBLIC_WEBHOOK_ENDPOINT' in environment`);
     }
 
-    isAlive().then((res) => console.log(res));
+    if (menuItems.length == 1 && !socketConnected) {
+      setSocket(
+        io(NEXT_PUBLIC_WEBHOOK_ENDPOINT, {
+          autoConnect: true,
+          path: "/socket.io/v1",
+          reconnectionDelayMax: 10000,
+        })
+      );
+    }
 
-    const socket = io(NEXT_PUBLIC_SOCKET_ENDPOINT, {
-      autoConnect: true,
-      path: "/socket.io/v1",
-      reconnectionDelayMax: 10000,
-    });
+    menuItemsRef.current = menuItems;
+  }, [menuItems]);
 
+  useEffect(() => {
     function onConnect() {
-      console.log("socket.on connect");
       setSocketConnected(true);
 
-      const {
-        connection_success,
-        streams_timestamp,
-        transaction_success,
-        updated_watch_address,
-      } = onEvents;
-
       socket.on(connection_success, (payload) => {
-        console.log("payload connection_success");
         console.log(payload);
       });
 
-      socket.on(streams_timestamp, (payload) => {
-        console.log("payload streams_timestamp");
-        console.log(payload);
-      });
+      socket.on(transaction_success, transactionSuccessListener);
 
-      socket.on(transaction_success, (payload) => {
-        console.log("payload transaction_success");
-        console.log(payload);
-        updateTxState(payload);
-      });
+      socket.on(transaction_address, transactionAddressListener);
 
       socket.on(updated_watch_address, (payload) => {
-        const { data } = payload;
-        console.log({ data });
-        const selectedMenuItems = menuItems.find((item) => item.selected)!;
-
-        const updatedMenuItems = data.map((title: string) => ({
-          selected:
-            title.toLowerCase() === selectedMenuItems.title.toLowerCase(),
-          title,
-        }));
-
-        setMenuItems(updatedMenuItems);
+        setMenuItems([{ title: payload, selected: true }]);
       });
     }
 
@@ -93,11 +169,9 @@ export default function PrimaryLayout({
       setSocketConnected(false);
     }
 
-    if (socket.connected) {
-      onConnect();
+    if (!socketConnected && menuItems.length == 1) {
+      socket.on("connect", onConnect);
     }
-
-    socket.on("connect", onConnect);
 
     socket.on("disconnect", onDisconnect);
 
@@ -108,14 +182,40 @@ export default function PrimaryLayout({
         socket.disconnect();
       }
     };
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
-    console.log({ socketConnected });
-    if (socketConnected) {
-      isAlive().then((res) => console.log(res));
+    if (searchQuery.length == 0) {
+      setLoading(false);
+      return;
     }
-  }, [socketConnected]);
+
+    setLoading(true);
+
+    socket.off(transaction_address, transactionAddressListener);
+
+    socket.off(transaction_success, transactionSuccessListener);
+
+    updateNotificationExpression(searchQuery).then((res) => {
+      const { data, error, success } = res;
+
+      if (!success) {
+        console.log(error);
+        setSearchQuery("");
+        return;
+      }
+
+      toggleMenuItemSelectedField(searchQuery);
+
+      setSearchQuery("");
+
+      setTxState({ [searchQuery]: [] });
+
+      socket.on(transaction_address, transactionAddressListener);
+
+      socket.on(transaction_success, transactionSuccessListener);
+    });
+  }, [searchQuery]);
 
   return (
     <MainApp>
