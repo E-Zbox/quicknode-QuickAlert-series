@@ -50,7 +50,6 @@ export const updateNotificationExpression = async (
 
 export const onEvents = {
   connection_success: "connection_success",
-  streams_timestamp: "streams_timestamp",
   transaction_address: "transaction_address",
   transaction_success: "transaction_success",
   updated_watch_address: "updated_watch_address",

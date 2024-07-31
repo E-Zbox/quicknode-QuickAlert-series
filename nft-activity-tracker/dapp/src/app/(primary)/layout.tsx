@@ -74,7 +74,6 @@ export default function PrimaryLayout({
 
   const {
     connection_success,
-    streams_timestamp,
     transaction_address,
     transaction_success,
     updated_watch_address,
