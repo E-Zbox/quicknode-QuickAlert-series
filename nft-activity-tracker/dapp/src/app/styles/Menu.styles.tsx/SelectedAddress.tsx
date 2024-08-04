@@ -4,6 +4,10 @@ interface IToggle {
   $selected: boolean;
 }
 
+interface ICopyIcon {
+  $interactable: boolean;
+}
+
 export const MainSelectedAddress = styled.main`
   height: 40px;
   width: 100%;
@@ -76,3 +80,17 @@ export const MainToggle = styled.main<IToggle>`
 `;
 
 export const ToggleCircle = styled.div``;
+
+export const CopyIcon = styled.img<ICopyIcon>`
+  --size: 16px;
+  height: var(--size);
+  width: var(--size);
+
+  &:hover {
+    scale: ${({ $interactable }) => ($interactable ? `1.2` : `1`)};
+  }
+
+  &:active {
+    scale: ${({ $interactable }) => ($interactable ? `0.9` : `1`)};
+  }
+`;
